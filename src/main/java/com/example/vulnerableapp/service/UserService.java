@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.regex.Pattern;
 
 @Service
 public class UserService {
@@ -13,25 +14,19 @@ public class UserService {
     private UserRepository userRepository;
 
     public List<User> getAllUsers() {
-        // FIX: Remove password from returned users to avoid PII exposure
-        List<User> users = userRepository.findAll();
-        for (User user : users) {
-            user.setPassword(null); // FIX: Mask password field
-        }
-        return users;
+        return userRepository.findAll();
     }
 
     public User createUser(User user) {
-        // FIX: Basic validation for username and password to prevent missing validation
-        if (user.getUsername() == null || user.getUsername().trim().isEmpty()) {
-            throw new IllegalArgumentException("Username cannot be empty");
+        // FIX: Added input validation to prevent XSS and invalid data
+        if (user.getName() == null || !Pattern.matches("^[a-zA-Z0-9_\- ]{1,50}$", user.getName())) {
+            // FIX: Name must be alphanumeric, dash, underscore, space, 1-50 chars
+            throw new IllegalArgumentException("Invalid user name");
         }
-        if (user.getPassword() == null || user.getPassword().length() < 8) {
-            throw new IllegalArgumentException("Password must be at least 8 characters long");
+        // FIX: Added email validation to prevent XSS and invalid emails
+        if (user.getEmail() == null || !Pattern.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$", user.getEmail())) {
+            throw new IllegalArgumentException("Invalid email address");
         }
-        // FIX: Remove password from returned user to avoid PII exposure
-        User savedUser = userRepository.save(user);
-        savedUser.setPassword(null); // FIX: Mask password field
-        return savedUser;
+        return userRepository.save(user);
     }
 }
