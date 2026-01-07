@@ -1,13 +1,9 @@
 package com.example.vulnerableapp.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 public class User {
     private Long id;
-    private String username;
-    // FIX: Prevent password from being serialized in API responses
-    @JsonIgnore
-    private String password;
+    private String name;
+    private String email;
 
     public Long getId() {
         return id;
@@ -17,19 +13,23 @@ public class User {
         this.id = id;
     }
 
-    public String getUsername() {
-        return username;
+    public String getName() {
+        // FIX: Sanitize output to prevent XSS
+        return name != null ? name.replaceAll("[<>]", "") : null;
     }
 
-    public void setUsername(String username) {
-        this.username = username;
+    public void setName(String name) {
+        // FIX: Sanitize input to prevent XSS
+        this.name = name != null ? name.replaceAll("[<>]", "") : null;
     }
 
-    public String getPassword() {
-        return password;
+    public String getEmail() {
+        // FIX: Sanitize output to prevent XSS
+        return email != null ? email.replaceAll("[<>]", "") : null;
     }
 
-    public void setPassword(String password) {
-        this.password = password;
+    public void setEmail(String email) {
+        // FIX: Sanitize input to prevent XSS
+        this.email = email != null ? email.replaceAll("[<>]", "") : null;
     }
 }
