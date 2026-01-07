@@ -18,12 +18,11 @@ public class UserService {
     }
 
     public User createUser(User user) {
-        // FIX: Added input validation to prevent XSS and invalid data
+        // FIX: Validate user name to prevent XSS and invalid input
         if (user.getName() == null || !Pattern.matches("^[a-zA-Z0-9_\- ]{1,50}$", user.getName())) {
-            // FIX: Name must be alphanumeric, dash, underscore, space, 1-50 chars
             throw new IllegalArgumentException("Invalid user name");
         }
-        // FIX: Added email validation to prevent XSS and invalid emails
+        // FIX: Validate email format to prevent XSS and invalid input
         if (user.getEmail() == null || !Pattern.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$", user.getEmail())) {
             throw new IllegalArgumentException("Invalid email address");
         }
