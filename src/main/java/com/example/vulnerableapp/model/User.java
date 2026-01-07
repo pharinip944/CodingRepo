@@ -1,10 +1,13 @@
 package com.example.vulnerableapp.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 public class User {
     private Long id;
     private String username;
-    // FIX: Mark password as transient to avoid accidental serialization/logging
-    private transient String password;
+    // FIX: Prevent password from being serialized in API responses
+    @JsonIgnore
+    private String password;
 
     public Long getId() {
         return id;
