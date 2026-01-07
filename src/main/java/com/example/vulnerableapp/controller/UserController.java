@@ -5,7 +5,6 @@ import com.example.vulnerableapp.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @RestController
@@ -15,34 +14,26 @@ public class UserController {
     private UserService userService;
 
     @GetMapping
-    public List<UserResponse> getAllUsers() {
-        // FIX: Do not expose password in API response
-        return userService.getAllUsers().stream().map(UserResponse::new).collect(Collectors.toList());
+    public List<User> getAllUsers() {
+        // FIX: Do not return passwords in API responses
+        return userService.getAllUsers().stream().map(user -> {
+            User safeUser = new User();
+            safeUser.setId(user.getId());
+            safeUser.setUsername(user.getUsername());
+            // FIX: Do NOT set password in response
+            return safeUser;
+        }).collect(Collectors.toList());
     }
 
     @PostMapping
-    public UserResponse createUser(@RequestBody User user) {
-        // FIX: Input validation for username and password to prevent injection and weak passwords
-        if (user.getUsername() == null || !Pattern.matches("^[a-zA-Z0-9_]{3,50}$", user.getUsername())) {
-            throw new IllegalArgumentException("Invalid username. Only alphanumeric and underscore, 3-50 chars.");
-        }
-        if (user.getPassword() == null || user.getPassword().length() < 8 || user.getPassword().length() > 100) {
-            throw new IllegalArgumentException("Invalid password. Must be 8-100 chars.");
-        }
-        // FIX: Do not log or return password
+    public User createUser(@RequestBody User user) {
+        // FIX: Input validation and password hashing are handled in the service
         User created = userService.createUser(user);
-        return new UserResponse(created);
-    }
-
-    // FIX: Response DTO to avoid exposing password
-    public static class UserResponse {
-        private Long id;
-        private String username;
-        public UserResponse(User user) {
-            this.id = user.getId();
-            this.username = user.getUsername();
-        }
-        public Long getId() { return id; }
-        public String getUsername() { return username; }
+        // FIX: Do not return password in API response
+        User safeUser = new User();
+        safeUser.setId(created.getId());
+        safeUser.setUsername(created.getUsername());
+        // FIX: Do NOT set password in response
+        return safeUser;
     }
 }
