@@ -5,8 +5,11 @@ import com.example.vulnerableapp.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
 import java.util.List;
-import java.util.regex.Pattern;
 
 @Service
 public class UserService {
@@ -18,14 +21,34 @@ public class UserService {
     }
 
     public User createUser(User user) {
-        // FIX: Validate user name to prevent XSS and invalid input
-        if (user.getName() == null || !Pattern.matches("^[a-zA-Z0-9_\- ]{1,50}$", user.getName())) {
-            throw new IllegalArgumentException("Invalid user name");
+        // FIX: Validate username: must be alphanumeric and 3-20 characters
+        if (user.getUsername() == null ||
+            !user.getUsername().matches("^[a-zA-Z0-9]{3,20}$")) {
+            throw new IllegalArgumentException("Username must be 3-20 alphanumeric characters.");
         }
-        // FIX: Validate email format to prevent XSS and invalid input
-        if (user.getEmail() == null || !Pattern.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$", user.getEmail())) {
-            throw new IllegalArgumentException("Invalid email address");
+
+        // FIX: Validate password: at least 8 chars, at least one letter and one number
+        String password = user.getPassword();
+        if (password == null ||
+            password.length() < 8 ||
+            !password.matches(".*[A-Za-z].*") ||
+            !password.matches(".*\\d.*")) {
+            throw new IllegalArgumentException("Password must be at least 8 characters and include at least one letter and one number.");
         }
+
+        // FIX: Hash password before storing (using SHA-256 for demonstration; use bcrypt in production)
+        user.setPassword(hashPassword(password));
         return userRepository.save(user);
+    }
+
+    // FIX: Added password hashing method
+    private String hashPassword(String password) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(password.getBytes(StandardCharsets.UTF_8));
+            return Base64.getEncoder().encodeToString(hash);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("Password hashing failed", e);
+        }
     }
 }
