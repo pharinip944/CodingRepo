@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.regex.Pattern;
+import java.sql.*;
 
 @RestController
 @RequestMapping("/users")
@@ -31,6 +32,27 @@ public class UserController {
             }
         }
         return users;
+    }
+
+    @PostMapping("/login")
+    public User login(@RequestParam String username, @RequestParam String password) throws SQLException {
+        // FIX: Use parameterized query to prevent SQL Injection
+        String query = "SELECT * FROM users WHERE username = ? AND password = ?";
+        try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/vulnerableapp", "root", System.getenv("DB_PASSWORD"));
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setString(1, username);
+            stmt.setString(2, password);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                User user = new User();
+                user.setId(rs.getLong("id"));
+                user.setName(rs.getString("username"));
+                user.setEmail(rs.getString("email"));
+                return user;
+            } else {
+                throw new IllegalArgumentException("Invalid credentials");
+            }
+        }
     }
 
     @PostMapping
